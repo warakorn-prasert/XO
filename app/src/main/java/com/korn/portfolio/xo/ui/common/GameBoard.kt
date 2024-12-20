@@ -23,13 +23,14 @@ fun GameBoard(
     board: List<List<Boolean?>>,
     enabled: Boolean,
     onCellClick: (x: Int, y: Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    matchHeightConstraintsFirst: Boolean = false
 ) {
     Column(
         modifier
             .leftBorder()
             .topBorder()
-            .aspectRatio(1f)
+            .aspectRatio(1f, matchHeightConstraintsFirst)
     ) {
         repeat(board.size) { y ->
             Row(

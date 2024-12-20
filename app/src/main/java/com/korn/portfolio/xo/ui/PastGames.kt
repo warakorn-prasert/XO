@@ -11,8 +11,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -39,6 +40,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -101,24 +107,31 @@ fun PastGames(
                 )
         }
     ) { paddingValues ->
-        LazyColumn(
+        val gameSize = games.size
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 400.dp),
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize(),
             contentPadding = PaddingValues(bottom = (FAB_HEIGHT_DP + FAB_PADDING_DP).dp)
         ) {
             itemsIndexed(items = games, key = { _, it -> it.id }) { idx, game ->
-                if (idx > 0)
-                    HorizontalDivider(Modifier.padding(horizontal = 24.dp))
-                GameItem(
-                    game = game,
-                    onInspect = { onInspect(game) },
-                    onDelete = { onDelete(game) }
-                )
+                Column {
+                    GameItem(
+                        game = game,
+                        onInspect = { onInspect(game) },
+                        onDelete = { onDelete(game) }
+                    )
+                    if (idx < gameSize - 1)
+                        HorizontalDivider(Modifier.padding(horizontal = 24.dp))
+                }
             }
         }
     }
 }
+
+private const val SCROLL_BAR_WIDTH_DP = 4
+private const val SCROLL_BAR_HEIGHT_DP = 40
 
 @Composable
 private fun PlayDialog(
@@ -127,9 +140,34 @@ private fun PlayDialog(
 ) {
     Dialog(onDismissRequest) {
         Card {
+            val scrollState = rememberScrollState()
+            val scrollBarColor = MaterialTheme.colorScheme.onSurfaceVariant
+            val density = LocalDensity.current
+            val barWidth = with(density) { SCROLL_BAR_WIDTH_DP.dp.toPx() }
+            val barHeight = with(density) { SCROLL_BAR_HEIGHT_DP.dp.toPx() }
             Column(
                 modifier = Modifier
-                    .verticalScroll(rememberScrollState())  // for landscape phone
+                    .let {
+                        // Draw scrollbar
+                        if (scrollState.canScrollForward || scrollState.canScrollBackward)
+                            it.drawBehind {
+                                drawRoundRect(
+                                    color = scrollBarColor,
+                                    topLeft = Offset(
+                                        x = size.width - barWidth,
+                                        y = (size.height - barHeight) * scrollState.value / scrollState.maxValue
+                                    ),
+                                    size = Size(
+                                        width = barWidth * 2,  // make top-right and bottom-right not round
+                                        height = barHeight
+                                    ),
+                                    cornerRadius = CornerRadius(x = barWidth, y = barWidth)
+                                )
+                            }
+                        else
+                            it
+                    }
+                    .verticalScroll(scrollState)  // for landscape phone
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {

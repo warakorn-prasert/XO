@@ -2,13 +2,17 @@
 
 package com.korn.portfolio.xo.ui
 
+import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
@@ -44,7 +48,7 @@ import com.korn.portfolio.xo.ui.common.topBorder
 val Game.currentPlayer: String
     get() = if (moves.size % 2 == 1) playerX else playerO
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun Playing(
     game: Game,
@@ -81,39 +85,39 @@ fun Playing(
         Column(
             modifier = Modifier
                 .padding(paddingValues)
-                .padding(64.dp)
                 .fillMaxSize(),
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .height(IntrinsicSize.Max),
+                horizontalArrangement = Arrangement.spacedBy(48.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "${game.currentPlayer}'s turn",
-                    textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.displaySmall
+                )
+                Box(
+                    Modifier
+                        .leftBorder()
+                        .topBorder()
+                        .rightBorder()
+                        .bottomBorder()
+                        .let {
+                            if (game.currentPlayer == game.playerX) it.drawX()
+                            else it.drawO()
+                        }
+                        .aspectRatio(1f)
                 )
             }
             GameBoard(
                 board = game.moves.last(),
                 enabled = isPlaying,
                 onCellClick = { x, y -> onCellClick(game.currentPlayer, x, y) },
-                modifier = Modifier.weight(2f)
-            )
-            Box(
-                modifier = Modifier
-                    .leftBorder()
-                    .topBorder()
-                    .rightBorder()
-                    .bottomBorder()
-                    .let {
-                        if (game.currentPlayer == game.playerX) it.drawX()
-                        else it.drawO()
-                    }
-                    .fillMaxWidth(0.3f)
-                    .aspectRatio(1f)
+                modifier = Modifier.padding(40.dp)
             )
         }
         if (!isPlaying)
@@ -149,6 +153,10 @@ private fun ResultDialog(
 }
 
 @Preview
+@Preview(
+    uiMode = Configuration.ORIENTATION_LANDSCAPE,
+    device = "spec:id=reference_phone,shape=Normal,width=891,height=411,unit=dp,dpi=420"
+)
 @Composable
 private fun PlayingPreview() {
     Playing(
