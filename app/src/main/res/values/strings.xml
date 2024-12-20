@@ -1,3 +1,23 @@
 <resources>
     <string name="app_name">XO</string>
+    <string name="display_title">XO - Tic Tac Toe</string>
+    <string name="play_button_text">Let\'s Play!</string>
+    <string name="delete_button_description">Delete game button</string>
+    <string name="inspect_button_description">Inspect game button</string>
+
+    <string name="play_dialog_title">Setting</string>
+    <string name="play_dialog_close_button_description">Close setting dialog button</string>
+    <string name="choose_board_size">Board size</string>
+    <string name="choose_win_condition">Marks to win</string>
+    <string name="choose_player_X">Player X name</string>
+    <string name="choose_player_O">Player O name</string>
+    <string name="player_X_start_first">Player X starts first.</string>
+    <string name="start_game_button">START GAME !</string>
+
+    <string name="exit_game_button_description">Exit game button</string>
+    <string name="draw_message">Draw :(</string>
+    <string name="back_to_home">Back to home</string>
+
+    <string name="inspect_previous_move_button_description">See previous move button</string>
+    <string name="inspect_next_move_button_description">See next move button</string>
 </resources>
