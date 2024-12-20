@@ -2,6 +2,7 @@
 
 package com.korn.portfolio.xo.ui
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -130,9 +131,6 @@ fun PastGames(
     }
 }
 
-private const val SCROLL_BAR_WIDTH_DP = 4
-private const val SCROLL_BAR_HEIGHT_DP = 40
-
 @Composable
 private fun PlayDialog(
     onDismissRequest: () -> Unit,
@@ -140,35 +138,8 @@ private fun PlayDialog(
 ) {
     Dialog(onDismissRequest) {
         Card {
-            val scrollState = rememberScrollState()
-            val scrollBarColor = MaterialTheme.colorScheme.onSurfaceVariant
-            val density = LocalDensity.current
-            val barWidth = with(density) { SCROLL_BAR_WIDTH_DP.dp.toPx() }
-            val barHeight = with(density) { SCROLL_BAR_HEIGHT_DP.dp.toPx() }
             Column(
-                modifier = Modifier
-                    .let {
-                        // Draw scrollbar
-                        if (scrollState.canScrollForward || scrollState.canScrollBackward)
-                            it.drawBehind {
-                                drawRoundRect(
-                                    color = scrollBarColor,
-                                    topLeft = Offset(
-                                        x = size.width - barWidth,
-                                        y = (size.height - barHeight) * scrollState.value / scrollState.maxValue
-                                    ),
-                                    size = Size(
-                                        width = barWidth * 2,  // make top-right and bottom-right not round
-                                        height = barHeight
-                                    ),
-                                    cornerRadius = CornerRadius(x = barWidth, y = barWidth)
-                                )
-                            }
-                        else
-                            it
-                    }
-                    .verticalScroll(scrollState)  // for landscape phone
-                    .padding(16.dp),
+                modifier = Modifier.padding(vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 Box(
@@ -203,72 +174,87 @@ private fun PlayDialog(
                             ?.let { it !in MIN_WIN_CONDITION..boardSize.toInt() }
                             ?: false
 
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    val focus = LocalFocusManager.current
-                    OutlinedTextField(
-                        value = boardSize,
-                        onValueChange = { boardSize = it },
-                        modifier = Modifier.weight(1f),
-                        label = { Text(stringResource(R.string.choose_board_size)) },
-                        supportingText = { Text("Max $MAX_BOARD_SIZE") },
-                        isError = invalidBoardSize,
-                        keyboardOptions = KeyboardOptions.Default.copy(
-                            keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Done
-                        ),
-                        keyboardActions = KeyboardActions(onDone = { focus.clearFocus() })
-                    )
-                    OutlinedTextField(
-                        value = winCondition,
-                        onValueChange = { winCondition = it },
-                        modifier = Modifier.weight(1f),
-                        label = { Text(stringResource(R.string.choose_win_condition)) },
-                        supportingText = { Text("Min $MIN_WIN_CONDITION") },
-                        isError = invalidWinCondition,
-                        keyboardOptions = KeyboardOptions.Default.copy(
-                            keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Done
-                        ),
-                        keyboardActions = KeyboardActions(onDone = { focus.clearFocus() })
-                    )
-                }
-
                 var playerX by rememberSaveable { mutableStateOf(DEFAULT_PLAYER_X) }
                 var playerO by rememberSaveable { mutableStateOf(DEFAULT_PLAYER_O) }
 
                 val invalidPlayerX = playerX.isBlank() || playerX == playerO
                 val invalidPlayerO = playerO.isBlank() || playerO == playerX
 
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    val focus = LocalFocusManager.current
-                    OutlinedTextField(
-                        value = playerX,
-                        onValueChange = { if (it.length <= MAX_PLAYER_LENGTH) playerX = it },
-                        modifier = Modifier.weight(1f),
-                        label = { Text(stringResource(R.string.choose_player_X)) },
-                        supportingText = { Text("Max $MAX_PLAYER_LENGTH chars") },
-                        isError = invalidPlayerX,
-                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = { focus.clearFocus() })
-                    )
-                    OutlinedTextField(
-                        value = playerO,
-                        onValueChange = { if (it.length <= MAX_PLAYER_LENGTH) playerO = it },
-                        modifier = Modifier.weight(1f),
-                        label = { Text(stringResource(R.string.choose_player_O)) },
-                        supportingText = { Text("Max $MAX_PLAYER_LENGTH chars") },
-                        isError = invalidPlayerO,
-                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = { focus.clearFocus() })
+                val scrollState = rememberScrollState()
+                Column(
+                    modifier = Modifier
+                        .let {
+                            if (scrollState.canScrollForward || scrollState.canScrollBackward)
+                                it.scrollbar(scrollState)
+                            else
+                                it
+                        }
+                        .verticalScroll(scrollState)
+                        .padding(horizontal = 16.dp)
+                        .weight(weight = 1f, fill = false),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        val focus = LocalFocusManager.current
+                        OutlinedTextField(
+                            value = boardSize,
+                            onValueChange = { boardSize = it },
+                            modifier = Modifier.weight(1f),
+                            label = { Text(stringResource(R.string.choose_board_size)) },
+                            supportingText = { Text("Max $MAX_BOARD_SIZE") },
+                            isError = invalidBoardSize,
+                            keyboardOptions = KeyboardOptions.Default.copy(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Done
+                            ),
+                            keyboardActions = KeyboardActions(onDone = { focus.clearFocus() })
+                        )
+                        OutlinedTextField(
+                            value = winCondition,
+                            onValueChange = { winCondition = it },
+                            modifier = Modifier.weight(1f),
+                            label = { Text(stringResource(R.string.choose_win_condition)) },
+                            supportingText = { Text("Min $MIN_WIN_CONDITION") },
+                            isError = invalidWinCondition,
+                            keyboardOptions = KeyboardOptions.Default.copy(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Done
+                            ),
+                            keyboardActions = KeyboardActions(onDone = { focus.clearFocus() })
+                        )
+                    }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        val focus = LocalFocusManager.current
+                        OutlinedTextField(
+                            value = playerX,
+                            onValueChange = { if (it.length <= MAX_PLAYER_LENGTH) playerX = it },
+                            modifier = Modifier.weight(1f),
+                            label = { Text(stringResource(R.string.choose_player_X)) },
+                            supportingText = { Text("Max $MAX_PLAYER_LENGTH chars") },
+                            isError = invalidPlayerX,
+                            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { focus.clearFocus() })
+                        )
+                        OutlinedTextField(
+                            value = playerO,
+                            onValueChange = { if (it.length <= MAX_PLAYER_LENGTH) playerO = it },
+                            modifier = Modifier.weight(1f),
+                            label = { Text(stringResource(R.string.choose_player_O)) },
+                            supportingText = { Text("Max $MAX_PLAYER_LENGTH chars") },
+                            isError = invalidPlayerO,
+                            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { focus.clearFocus() })
+                        )
+                    }
+
+                    Text(
+                        text = stringResource(R.string.player_X_start_first),
+                        color = MaterialTheme.colorScheme.outline,
+                        fontStyle = FontStyle.Italic,
+                        style = MaterialTheme.typography.labelSmall
                     )
                 }
-
-                Text(
-                    text = stringResource(R.string.player_X_start_first),
-                    color = MaterialTheme.colorScheme.outline,
-                    fontStyle = FontStyle.Italic,
-                    style = MaterialTheme.typography.labelSmall
-                )
 
                 TextButton(
                     onClick = {
@@ -287,6 +273,33 @@ private fun PlayDialog(
             }
         }
     }
+}
+
+private const val SCROLL_BAR_WIDTH_DP = 4
+private const val SCROLL_BAR_HEIGHT_DP = 40
+
+@Composable
+private fun Modifier.scrollbar(scrollState: ScrollState): Modifier {
+    val scrollBarColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val density = LocalDensity.current
+    val barWidth = with(density) { SCROLL_BAR_WIDTH_DP.dp.toPx() }
+    val barHeight = with(density) { SCROLL_BAR_HEIGHT_DP.dp.toPx() }
+    return this.then(
+        Modifier.drawBehind {
+            drawRoundRect(
+                color = scrollBarColor,
+                topLeft = Offset(
+                    x = size.width - barWidth,
+                    y = (size.height - barHeight) * scrollState.value / scrollState.maxValue
+                ),
+                size = Size(
+                    width = barWidth * 2,  // make top-right and bottom-right not round
+                    height = barHeight
+                ),
+                cornerRadius = CornerRadius(x = barWidth, y = barWidth)
+            )
+        }
+    )
 }
 
 @Composable
