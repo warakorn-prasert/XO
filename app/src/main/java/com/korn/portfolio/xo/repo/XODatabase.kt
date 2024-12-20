@@ -65,39 +65,46 @@ data class Game(
     }
 
     val winner: String?
-        get() {
-            val board = moves.last()
-            for (y in 0..<boardSize) {
-                for (x in 0..<boardSize) {
-                    val checkXTiles = Array<Boolean?>(winCondition) { null }  // (-)
-                    val checkYTiles = Array<Boolean?>(winCondition) { null }  // (|)
-                    val checkD1Tiles = Array<Boolean?>(winCondition) { null }  // (/)
-                    val checkD2Tiles = Array<Boolean?>(winCondition) { null }  // (\)
-                    checkXTiles[0] = board[y][x]
-                    checkYTiles[0] = board[y][x]
-                    checkD1Tiles[0] = board[y][x]
-                    checkD2Tiles[0] = board[y][x]
-
-                    for (i in 0..<winCondition) {
-                        if (y + i < boardSize)
-                            checkYTiles[i] = board[y + i][x]
-                        if (x + i < boardSize)
-                            checkXTiles[i] = board[y][x + i]
-                        if (y - i >= 0 && x + i < boardSize)
-                            checkD1Tiles[i] = board[y - i][x + i]
-                        if (y + i < boardSize && x + i < boardSize)
-                            checkD2Tiles[i] = board[y + i][x + i]
-                    }
-                    if (checkYTiles.all { it == true } || checkXTiles.all { it == true }
-                        || checkD1Tiles.all { it == true } || checkD2Tiles.all { it == true })
-                        return playerX
-                    if (checkYTiles.all { it == false } || checkXTiles.all { it == false }
-                        || checkD1Tiles.all { it == false } || checkD2Tiles.all { it == false })
-                        return playerO
-                }
-            }
-            return null
+        get() = when (winner(moves.last(), winCondition)) {
+            true -> playerX
+            false -> playerO
+            null -> null
         }
+}
+
+fun winner(board: List<List<Boolean?>>, winCondition: Int): Boolean? {
+    val ySize = board.size
+    val xSize = board.first().size
+    for (y in 0..<ySize) {
+        for (x in 0..<xSize) {
+            val checkXTiles = Array<Boolean?>(winCondition) { null }  // (-)
+            val checkYTiles = Array<Boolean?>(winCondition) { null }  // (|)
+            val checkD1Tiles = Array<Boolean?>(winCondition) { null }  // (/)
+            val checkD2Tiles = Array<Boolean?>(winCondition) { null }  // (\)
+            checkXTiles[0] = board[y][x]
+            checkYTiles[0] = board[y][x]
+            checkD1Tiles[0] = board[y][x]
+            checkD2Tiles[0] = board[y][x]
+
+            for (i in 0..<winCondition) {
+                if (y + i < ySize)
+                    checkYTiles[i] = board[y + i][x]
+                if (x + i < xSize)
+                    checkXTiles[i] = board[y][x + i]
+                if (y - i >= 0 && x + i < xSize)
+                    checkD1Tiles[i] = board[y - i][x + i]
+                if (y + i < ySize && x + i < xSize)
+                    checkD2Tiles[i] = board[y + i][x + i]
+            }
+            if (checkYTiles.all { it == true } || checkXTiles.all { it == true }
+                || checkD1Tiles.all { it == true } || checkD2Tiles.all { it == true })
+                return true
+            if (checkYTiles.all { it == false } || checkXTiles.all { it == false }
+                || checkD1Tiles.all { it == false } || checkD2Tiles.all { it == false })
+                return false
+        }
+    }
+    return null
 }
 
 @Dao
