@@ -17,7 +17,8 @@ import kotlinx.coroutines.launch
 class SharedViewModel(private val repo: XORepository) : ViewModel() {
     val games = repo.games
 
-    var gameToPlay: Game? by mutableStateOf(null)
+    // game and bot
+    var gameToPlay: Pair<Game, String?>? by mutableStateOf(null)
 
     fun deleteGame(vararg game: Game) {
         viewModelScope.launch {

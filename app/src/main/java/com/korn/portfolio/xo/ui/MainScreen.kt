@@ -30,14 +30,14 @@ fun MainScreen(modifier: Modifier = Modifier) {
             PastGames(
                 games = games,
                 onInspect = { game ->
-                    viewModel.gameToPlay = game
+                    viewModel.gameToPlay = game to null
                     currentDest = Destination.INSPECT
                 },
                 onDelete = { game ->
                     viewModel.deleteGame(game)
                 },
-                onPlay = { game ->
-                    viewModel.gameToPlay = game
+                onPlay = { game, bot ->
+                    viewModel.gameToPlay = game to bot
                     currentDest = Destination.PLAYING
                 },
                 modifier = modifier.fillMaxSize()
@@ -45,7 +45,7 @@ fun MainScreen(modifier: Modifier = Modifier) {
         }
         Destination.INSPECT ->
             Inspect(
-                game = viewModel.gameToPlay!!,
+                game = viewModel.gameToPlay!!.first,
                 onExit = {
                     currentDest = Destination.PAST_GAMES
                 },
@@ -53,9 +53,12 @@ fun MainScreen(modifier: Modifier = Modifier) {
             )
         Destination.PLAYING ->
             Playing(
-                game = viewModel.gameToPlay!!,
+                game = viewModel.gameToPlay!!.first,
+                bot = viewModel.gameToPlay!!.second,
                 onCellClick = { player, x, y ->
-                    viewModel.gameToPlay = viewModel.gameToPlay!!.addMove(player, x, y)
+                    viewModel.gameToPlay = viewModel.gameToPlay!!.run {
+                        first.addMove(player, x, y) to second
+                    }
                 },
                 onSaveGame = { game ->
                     viewModel.saveGame(game)
