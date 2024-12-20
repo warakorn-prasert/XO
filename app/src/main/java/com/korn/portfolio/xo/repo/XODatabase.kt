@@ -78,7 +78,6 @@ data class Game(
                     checkD1Tiles[0] = board[y][x]
                     checkD2Tiles[0] = board[y][x]
 
-                    // 1. Check vertically
                     for (i in 0..<winCondition) {
                         if (y + i < boardSize)
                             checkYTiles[i] = board[y + i][x]
