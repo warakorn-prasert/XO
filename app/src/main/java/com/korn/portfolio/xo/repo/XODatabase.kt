@@ -47,9 +47,9 @@ data class Game(
         require(moves.last()[y][x] == null) { "Cannot add move to non-empty position." }
 
         val newMove: List<MutableList<Boolean?>> = List(boardSize) { MutableList(boardSize) { null } }
-        moves.last().forEachIndexed { lastX, ys ->
-            ys.forEachIndexed { lastY, lastValue ->
-                newMove[lastX][lastY] = lastValue
+        moves.last().forEachIndexed { lastY, ys ->
+            ys.forEachIndexed { lastX, lastValue ->
+                newMove[lastY][lastX] = lastValue
             }
         }
         newMove[y][x] = player == playerX
