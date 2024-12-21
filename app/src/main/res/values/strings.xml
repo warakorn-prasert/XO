@@ -3,7 +3,11 @@
     <string name="display_title">XO - Tic Tac Toe</string>
     <string name="play_button_text">Let\'s Play!</string>
     <string name="delete_button_description">Delete game button</string>
+    <string name="delete_all_button_description">Delete all games button</string>
     <string name="inspect_button_description">Inspect game button</string>
+    <string name="delete_all_game_confirm_text">Delete all game?</string>
+    <string name="close_dialog_button_description">Close dialog button</string>
+    <string name="confirm_dialog_button_description">Confirm dialog button</string>
 
     <string name="play_dialog_title">Setting</string>
     <string name="play_dialog_close_button_description">Close setting dialog button</string>

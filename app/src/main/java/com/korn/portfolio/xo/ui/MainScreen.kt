@@ -36,6 +36,9 @@ fun MainScreen(modifier: Modifier = Modifier) {
                 onDelete = { game ->
                     viewModel.deleteGame(game)
                 },
+                onDeleteAll = {
+                    viewModel.deleteAllGames()
+                },
                 onPlay = { game, bot ->
                     viewModel.gameToPlay = game to bot
                     currentDest = Destination.PLAYING

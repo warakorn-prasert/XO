@@ -26,6 +26,12 @@ class SharedViewModel(private val repo: XORepository) : ViewModel() {
         }
     }
 
+    fun deleteAllGames() {
+        viewModelScope.launch {
+            repo.deleteAllGames()
+        }
+    }
+
     fun saveGame(vararg game: Game) {
         viewModelScope.launch {
             repo.insertGame(*game)

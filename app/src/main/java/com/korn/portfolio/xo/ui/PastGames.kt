@@ -24,8 +24,10 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Done
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,6 +44,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -87,6 +90,7 @@ fun PastGames(
     games: List<Game>,
     onInspect: (Game) -> Unit,
     onDelete: (Game) -> Unit,
+    onDeleteAll: () -> Unit,
     onPlay: (game: Game, bot: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -98,6 +102,20 @@ fun PastGames(
             TopAppBar(
                 title = {
                     Text(stringResource(R.string.display_title))
+                },
+                actions = {
+                    var showDeleteDialog by remember { mutableStateOf(false) }
+                    IconButton({ showDeleteDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = stringResource(R.string.delete_all_button_description)
+                        )
+                    }
+                    if (showDeleteDialog)
+                        DeleteAllDialog(
+                            onDismissRequest = { showDeleteDialog = false },
+                            onDeleteAll = onDeleteAll
+                        )
                 }
             )
         },
@@ -139,6 +157,45 @@ fun PastGames(
                     )
                     if (idx < gameSize - 1)
                         HorizontalDivider(Modifier.padding(horizontal = 24.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DeleteAllDialog(
+    onDismissRequest: () -> Unit,
+    onDeleteAll: () -> Unit
+) {
+    Dialog(onDismissRequest) {
+        Card {
+            Column(
+                modifier = Modifier
+                    .padding(start = 16.dp, top = 32.dp, end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = stringResource(R.string.delete_all_game_confirm_text),
+                    style = MaterialTheme.typography.headlineMedium
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    IconButton(onDismissRequest) {
+                        Icon(
+                            imageVector = Icons.Outlined.Close,
+                            contentDescription = stringResource(R.string.close_dialog_button_description)
+                        )
+                    }
+                    IconButton({ onDeleteAll(); onDismissRequest() }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Done,
+                            contentDescription = stringResource(R.string.confirm_dialog_button_description)
+                        )
+                    }
                 }
             }
         }
@@ -422,8 +479,15 @@ private fun PastGamesPreview() {
         ),
         onInspect = {},
         onDelete = {},
+        onDeleteAll = {},
         onPlay = { _, _ -> }
     )
+}
+
+@Preview
+@Composable
+private fun DeleteAllDialogPreview() {
+    DeleteAllDialog({}, {})
 }
 
 @Preview
