@@ -8,12 +8,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Card
@@ -30,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -96,29 +98,39 @@ fun Playing(
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(
+            FlowRow(
                 modifier = Modifier
                     .padding(top = 8.dp)
-                    .height(IntrinsicSize.Max),
+                    .width(IntrinsicSize.Max),
                 horizontalArrangement = Arrangement.spacedBy(48.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
                 Text(
                     text = "${game.currentPlayer}'s turn",
+                    textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.displaySmall
                 )
+                val textSize = with(LocalDensity.current) {
+                    MaterialTheme.typography.displaySmall.fontSize.toDp()
+                }
                 Box(
-                    Modifier
-                        .leftBorder()
-                        .topBorder()
-                        .rightBorder()
-                        .bottomBorder()
-                        .let {
-                            if (game.currentPlayer == game.playerX) it.drawX()
-                            else it.drawO()
-                        }
-                        .aspectRatio(1f)
-                )
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        Modifier
+                            .size(textSize * 1.5f)
+                            .leftBorder()
+                            .topBorder()
+                            .rightBorder()
+                            .bottomBorder()
+                            .let {
+                                if (game.currentPlayer == game.playerX) it.drawX()
+                                else it.drawO()
+                            }
+                            .aspectRatio(1f)
+                    )
+                }
             }
 
             val isBotThinking = game.currentPlayer == bot
@@ -195,6 +207,28 @@ private fun PlayingPreview() {
             boardSize = 3,
             winCondition = 3,
             playerX = "Player 1",
+            playerO = "Player 2",
+            moves = listOf(listOf(
+                listOf(null, true, null),
+                listOf(false, true, null),
+                listOf(null, null, false)
+            ))
+        ),
+        bot = null,
+        onCellClick = { _, _, _ ->},
+        onSaveGame = {},
+        onExit = {}
+    )
+}
+
+@Preview
+@Composable
+private fun LongNamePreview() {
+    Playing(
+        game = Game(
+            boardSize = 3,
+            winCondition = 3,
+            playerX = "Player 11111111111",
             playerO = "Player 2",
             moves = listOf(listOf(
                 listOf(null, true, null),
