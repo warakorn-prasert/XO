@@ -9,9 +9,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
@@ -87,7 +91,9 @@ fun PastGames(
     modifier: Modifier = Modifier
 ) {
     Scaffold(
-        modifier = modifier,
+        modifier = Modifier
+            .statusBarsPadding()
+            .then(modifier),
         topBar = {
             TopAppBar(
                 title = {
@@ -98,7 +104,8 @@ fun PastGames(
         floatingActionButton = {
             var showPlayDialog by rememberSaveable { mutableStateOf(false) }
             ExtendedFloatingActionButton(
-                onClick = { showPlayDialog = true }
+                onClick = { showPlayDialog = true },
+                modifier = Modifier.navigationBarsPadding()
             ) {
                 Text(stringResource(R.string.play_button_text))
             }
@@ -107,15 +114,21 @@ fun PastGames(
                     onDismissRequest = { showPlayDialog = false },
                     onPlay = onPlay
                 )
-        }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
         val gameSize = games.size
+        val navBarHeight = with(LocalDensity.current) {
+            WindowInsets.navigationBars.getBottom(this).toDp()
+        }
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 400.dp),
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize(),
-            contentPadding = PaddingValues(bottom = (FAB_HEIGHT_DP + FAB_PADDING_DP).dp)
+            contentPadding = PaddingValues(
+                bottom = navBarHeight + (FAB_HEIGHT_DP + FAB_PADDING_DP).dp
+            )
         ) {
             itemsIndexed(items = games, key = { _, it -> it.id }) { idx, game ->
                 Column {
