@@ -47,6 +47,7 @@ import com.korn.portfolio.xo.ui.common.drawX
 import com.korn.portfolio.xo.ui.common.leftBorder
 import com.korn.portfolio.xo.ui.common.rightBorder
 import com.korn.portfolio.xo.ui.common.topBorder
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -136,7 +137,7 @@ fun Playing(
             val isBotThinking = game.currentPlayer == bot
             val scope = rememberCoroutineScope()
             LaunchedEffect(isBotThinking) {
-                scope.launch {
+                scope.launch(Dispatchers.Default) {
                     if (game.currentPlayer == bot && isPlaying) {
                         val oldBoard = game.moves.last()
                         val newBoard = game.botMove(bot).moves.last()
