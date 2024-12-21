@@ -4,6 +4,9 @@ package com.korn.portfolio.xo.ui
 
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.InfiniteRepeatableSpec
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,9 +31,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -56,6 +61,7 @@ val Game.currentPlayer: String
     get() = if (moves.size % 2 == 1) playerX else playerO
 
 private const val BOT_DELAY_MILLIS = 300L
+private const val BOT_BOX_ROTATE_MILLS = 2000
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -99,6 +105,7 @@ fun Playing(
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            val isBotThinking = game.currentPlayer == bot
             FlowRow(
                 modifier = Modifier
                     .padding(start = 16.dp, top = 8.dp, end = 16.dp)
@@ -118,23 +125,30 @@ fun Playing(
                     modifier = Modifier.weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        Modifier
-                            .size(textSize * 1.5f)
-                            .leftBorder()
-                            .topBorder()
-                            .rightBorder()
-                            .bottomBorder()
-                            .let {
-                                if (game.currentPlayer == game.playerX) it.drawX()
-                                else it.drawO()
-                            }
-                            .aspectRatio(1f)
+                    val degree by animateFloatAsState(
+                        targetValue = if (isBotThinking) 360f else 0f,
+                        animationSpec = InfiniteRepeatableSpec(tween(BOT_BOX_ROTATE_MILLS)),
+                        label = stringResource(R.string.bot_box_degree_anim_label)
+                    )
+                    Box(Modifier
+                        .let {
+                            if (isBotThinking) it.rotate(degree)
+                            else it
+                        }
+                        .size(textSize * 1.5f)
+                        .leftBorder()
+                        .topBorder()
+                        .rightBorder()
+                        .bottomBorder()
+                        .let {
+                            if (game.currentPlayer == game.playerX) it.drawX()
+                            else it.drawO()
+                        }
+                        .aspectRatio(1f)
                     )
                 }
             }
 
-            val isBotThinking = game.currentPlayer == bot
             val scope = rememberCoroutineScope()
             LaunchedEffect(isBotThinking) {
                 scope.launch(Dispatchers.Default) {

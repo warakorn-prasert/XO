@@ -17,6 +17,7 @@
     <string name="exit_game_button_description">Exit game button</string>
     <string name="draw_message">Draw :(</string>
     <string name="back_to_home">Back to home</string>
+    <string name="bot_box_degree_anim_label">Player\'s mark rotation degree</string>
 
     <string name="inspect_previous_move_button_description">See previous move button</string>
     <string name="inspect_next_move_button_description">See next move button</string>
