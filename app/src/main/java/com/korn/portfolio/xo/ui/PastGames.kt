@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -82,7 +83,7 @@ fun PastGames(
     games: List<Game>,
     onInspect: (Game) -> Unit,
     onDelete: (Game) -> Unit,
-    onPlay: (Game) -> Unit,
+    onPlay: (game: Game, bot: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -134,7 +135,7 @@ fun PastGames(
 @Composable
 private fun PlayDialog(
     onDismissRequest: () -> Unit,
-    onPlay: (Game) -> Unit
+    onPlay: (game: Game, bot: String?) -> Unit
 ) {
     Dialog(onDismissRequest) {
         Card {
@@ -179,6 +180,9 @@ private fun PlayDialog(
 
                 val invalidPlayerX = playerX.isBlank() || playerX == playerO
                 val invalidPlayerO = playerO.isBlank() || playerO == playerX
+
+                var botX by rememberSaveable { mutableStateOf(false) }
+                var botO by rememberSaveable { mutableStateOf(true) }
 
                 val scrollState = rememberScrollState()
                 Column(
@@ -226,26 +230,46 @@ private fun PlayDialog(
 
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         val focus = LocalFocusManager.current
-                        OutlinedTextField(
-                            value = playerX,
-                            onValueChange = { if (it.length <= MAX_PLAYER_LENGTH) playerX = it },
-                            modifier = Modifier.weight(1f),
-                            label = { Text(stringResource(R.string.choose_player_X)) },
-                            supportingText = { Text("Max $MAX_PLAYER_LENGTH chars") },
-                            isError = invalidPlayerX,
-                            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = { focus.clearFocus() })
-                        )
-                        OutlinedTextField(
-                            value = playerO,
-                            onValueChange = { if (it.length <= MAX_PLAYER_LENGTH) playerO = it },
-                            modifier = Modifier.weight(1f),
-                            label = { Text(stringResource(R.string.choose_player_O)) },
-                            supportingText = { Text("Max $MAX_PLAYER_LENGTH chars") },
-                            isError = invalidPlayerO,
-                            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = { focus.clearFocus() })
-                        )
+                        Column(Modifier.weight(1f)) {
+                            OutlinedTextField(
+                                value = playerX,
+                                onValueChange = {
+                                    if (it.length <= MAX_PLAYER_LENGTH) playerX = it
+                                },
+                                label = { Text(stringResource(R.string.choose_player_X)) },
+                                supportingText = { Text("Max $MAX_PLAYER_LENGTH chars") },
+                                isError = invalidPlayerX,
+                                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(onDone = { focus.clearFocus() })
+                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Checkbox(botX, { botX = it; if (botX && botO) botO = false })
+                                Text(
+                                    text = "Bot",
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                            }
+                        }
+                        Column(Modifier.weight(1f)) {
+                            OutlinedTextField(
+                                value = playerO,
+                                onValueChange = {
+                                    if (it.length <= MAX_PLAYER_LENGTH) playerO = it
+                                },
+                                label = { Text(stringResource(R.string.choose_player_O)) },
+                                supportingText = { Text("Max $MAX_PLAYER_LENGTH chars") },
+                                isError = invalidPlayerO,
+                                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(onDone = { focus.clearFocus() })
+                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Checkbox(botO, { botO = it; if (botO && botX) botX = false })
+                                Text(
+                                    text = "Bot",
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                            }
+                        }
                     }
 
                     Text(
@@ -258,12 +282,20 @@ private fun PlayDialog(
 
                 TextButton(
                     onClick = {
-                        onPlay(Game(
-                            boardSize = boardSize.toInt(),
-                            winCondition = winCondition.toInt(),
-                            playerX = playerX,
-                            playerO = playerO
-                        ))
+                        val bot = when {
+                            botX -> "(Bot) $playerX"
+                            botO -> "(Bot) $playerO"
+                            else -> null
+                        }
+                        onPlay(
+                            Game(
+                                boardSize = boardSize.toInt(),
+                                winCondition = winCondition.toInt(),
+                                playerX = if (botX) bot!! else playerX,
+                                playerO = if (botO) bot!! else playerO
+                            ),
+                            bot
+                        )
                     },
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                     enabled = !(invalidBoardSize || invalidWinCondition || invalidPlayerX || invalidPlayerO)
@@ -377,7 +409,7 @@ private fun PastGamesPreview() {
         ),
         onInspect = {},
         onDelete = {},
-        onPlay = {}
+        onPlay = { _, _ -> }
     )
 }
 
@@ -386,7 +418,7 @@ private fun PastGamesPreview() {
 private fun PlayDialogPreview() {
     PlayDialog(
         onDismissRequest = {},
-        onPlay = {}
+        onPlay = { _, _ -> }
     )
 }
 

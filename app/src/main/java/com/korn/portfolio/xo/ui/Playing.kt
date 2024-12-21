@@ -27,6 +27,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -35,6 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.korn.portfolio.xo.R
+import com.korn.portfolio.xo.bot.botMove
 import com.korn.portfolio.xo.repo.Game
 import com.korn.portfolio.xo.ui.common.GameBoard
 import com.korn.portfolio.xo.ui.common.bottomBorder
@@ -43,15 +45,20 @@ import com.korn.portfolio.xo.ui.common.drawX
 import com.korn.portfolio.xo.ui.common.leftBorder
 import com.korn.portfolio.xo.ui.common.rightBorder
 import com.korn.portfolio.xo.ui.common.topBorder
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 // Player 1 is X, always starts first.
 val Game.currentPlayer: String
     get() = if (moves.size % 2 == 1) playerX else playerO
 
+private const val BOT_DELAY_MILLIS = 300L
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun Playing(
     game: Game,
+    bot: String?,
     onCellClick: (player: String, x: Int, y: Int) -> Unit,
     onSaveGame: (Game) -> Unit,
     onExit: () -> Unit,
@@ -113,9 +120,33 @@ fun Playing(
                         .aspectRatio(1f)
                 )
             }
+
+            val isBotThinking = game.currentPlayer == bot
+            val scope = rememberCoroutineScope()
+            LaunchedEffect(isBotThinking) {
+                scope.launch {
+                    if (game.currentPlayer == bot && isPlaying) {
+                        val oldBoard = game.moves.last()
+                        val newBoard = game.botMove(bot).moves.last()
+                        var botX = -1
+                        var botY = -1
+                        for (yy in 0..<game.boardSize) {
+                            for (xx in 0..<game.boardSize) {
+                                if (newBoard[yy][xx] != oldBoard[yy][xx]) {
+                                    botX = xx
+                                    botY = yy
+                                }
+                            }
+                        }
+                        delay(BOT_DELAY_MILLIS)
+                        onCellClick(bot, botX, botY)
+                    }
+                }
+            }
+
             GameBoard(
                 board = game.moves.last(),
-                enabled = isPlaying,
+                enabled = isPlaying && !isBotThinking,
                 onCellClick = { x, y -> onCellClick(game.currentPlayer, x, y) },
                 modifier = Modifier.padding(40.dp)
             )
@@ -171,6 +202,7 @@ private fun PlayingPreview() {
                 listOf(null, null, false)
             ))
         ),
+        bot = null,
         onCellClick = { _, _, _ ->},
         onSaveGame = {},
         onExit = {}
