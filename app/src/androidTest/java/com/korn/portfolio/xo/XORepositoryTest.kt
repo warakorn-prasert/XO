@@ -10,6 +10,7 @@ import com.korn.portfolio.xo.repo.XORepository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -102,6 +103,12 @@ class XORepositoryTest {
     @Test
     fun get_all_games() = runBlocking {
         assertEquals(games, repo.games.first())
+    }
+
+    @Test
+    fun delete_all_games() = runBlocking {
+        repo.deleteAllGames()
+        assertTrue(repo.games.first().isEmpty())
     }
 
     @Test

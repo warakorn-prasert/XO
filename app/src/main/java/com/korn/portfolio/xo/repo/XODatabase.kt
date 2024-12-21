@@ -117,6 +117,9 @@ interface GameDao {
 
     @Query("SELECT * FROM Game")
     fun getAll(): Flow<List<Game>>
+
+    @Query("DELETE FROM Game")
+    suspend fun deleteAll()
 }
 
 class MovesConverter {
