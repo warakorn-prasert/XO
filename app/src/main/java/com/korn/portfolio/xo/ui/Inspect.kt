@@ -94,7 +94,7 @@ fun Inspect(
             val currentPlayer = game.currentPlayer(currentIdx)
             FlowRow(
                 modifier = Modifier
-                    .padding(top = 8.dp)
+                    .padding(start = 16.dp, top = 8.dp, end = 16.dp)
                     .width(IntrinsicSize.Max),
                 horizontalArrangement = Arrangement.spacedBy(48.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp)
