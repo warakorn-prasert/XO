@@ -102,18 +102,21 @@ fun Inspect(
                     },
                     style = MaterialTheme.typography.displaySmall
                 )
-                Box(
-                    modifier = Modifier
+                if (currentIdx < game.moves.size - 1)
+                    Box(Modifier
                         .leftBorder()
                         .topBorder()
                         .rightBorder()
                         .bottomBorder()
-                        .let {
-                            if (currentPlayer == game.playerX) it.drawX()
-                            else it.drawO()
+                        .let { it2 ->
+                            when (currentPlayer) {
+                                game.playerX -> it2.drawX()
+                                game.playerO -> it2.drawO()
+                                else -> it2
+                            }
                         }
                         .aspectRatio(1f)
-                )
+                    )
             }
             Row(
                 modifier = Modifier
