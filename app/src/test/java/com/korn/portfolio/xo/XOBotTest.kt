@@ -19,10 +19,19 @@ class XOBotTest {
         listOf(null, null, null)
     )))
 
+    private val unplayed2 = game.copy(boardSize = 5, winCondition = 5, moves = listOf(listOf(
+        listOf(null, null, null, null, null),
+        listOf(null, null, null, null, null),
+        listOf(null, null, null, null, null),
+        listOf(null, null, null, null, null),
+        listOf(null, null, null, null, null)
+    )))
+
     @Test
     fun `No error with empty board`() {
         unplayed.botMove(unplayed.playerX)
         unplayed.botMove(unplayed.playerO)
+        unplayed2.botMove(unplayed2.playerO)
     }
 
     private val winnable = listOf(
