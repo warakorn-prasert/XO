@@ -8,13 +8,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
@@ -35,7 +38,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.korn.portfolio.xo.R
@@ -52,7 +57,7 @@ private fun Game.currentPlayer(idx: Int): String = this
     .copy(moves = moves.subList(0, idx + 1))
     .currentPlayer
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun Inspect(
     game: Game,
@@ -87,12 +92,12 @@ fun Inspect(
         ) {
             var currentIdx by rememberSaveable { mutableIntStateOf(0) }
             val currentPlayer = game.currentPlayer(currentIdx)
-            Row(
+            FlowRow(
                 modifier = Modifier
-                    .padding(top = 8.dp)
-                    .height(IntrinsicSize.Max),
+                    .padding(start = 16.dp, top = 8.dp, end = 16.dp)
+                    .width(IntrinsicSize.Max),
                 horizontalArrangement = Arrangement.spacedBy(48.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
                 Text(
                     text = when {
@@ -100,20 +105,33 @@ fun Inspect(
                         game.winner != null -> "${game.winner} won!"
                         else -> stringResource(R.string.draw_message)
                     },
+                    textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.displaySmall
                 )
-                Box(
-                    modifier = Modifier
-                        .leftBorder()
-                        .topBorder()
-                        .rightBorder()
-                        .bottomBorder()
-                        .let {
-                            if (currentPlayer == game.playerX) it.drawX()
-                            else it.drawO()
-                        }
-                        .aspectRatio(1f)
-                )
+                val textSize = with(LocalDensity.current) {
+                    MaterialTheme.typography.displaySmall.fontSize.toDp()
+                }
+                if (currentIdx < game.moves.size - 1)
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(Modifier
+                            .size(textSize * 1.5f)
+                            .leftBorder()
+                            .topBorder()
+                            .rightBorder()
+                            .bottomBorder()
+                            .let { it2 ->
+                                when (currentPlayer) {
+                                    game.playerX -> it2.drawX()
+                                    game.playerO -> it2.drawO()
+                                    else -> it2
+                                }
+                            }
+                            .aspectRatio(1f)
+                        )
+                    }
             }
             Row(
                 modifier = Modifier
@@ -170,6 +188,32 @@ private fun InspectPreview() {
             boardSize = 3,
             winCondition = 3,
             playerX = "Player 1",
+            playerO = "Player 2",
+            moves = listOf(
+                listOf(
+                    listOf(null, null, null),
+                    listOf(null, null, null),
+                    listOf(null, null, null)
+                ),
+                listOf(
+                    listOf(null, null, null),
+                    listOf(null, true, null),
+                    listOf(null, null, null)
+                )
+            )
+        ),
+        onExit = {}
+    )
+}
+
+@Preview
+@Composable
+private fun LongNamePreview() {
+    Inspect(
+        game = Game(
+            boardSize = 3,
+            winCondition = 3,
+            playerX = "Player 111111111111111111",
             playerO = "Player 2",
             moves = listOf(
                 listOf(

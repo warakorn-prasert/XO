@@ -12,4 +12,8 @@ class XORepository(private val gameDao: GameDao) {
     suspend fun deleteGame(vararg game: Game) {
         gameDao.delete(*game)
     }
+
+    suspend fun deleteAllGames() {
+        gameDao.deleteAll()
+    }
 }

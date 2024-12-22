@@ -9,19 +9,26 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Done
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,8 +43,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -59,6 +68,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.korn.portfolio.xo.R
 import com.korn.portfolio.xo.repo.Game
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 private const val FAB_HEIGHT_DP = 56
 private const val FAB_PADDING_DP = 16
@@ -83,22 +94,48 @@ fun PastGames(
     games: List<Game>,
     onInspect: (Game) -> Unit,
     onDelete: (Game) -> Unit,
+    onDeleteAll: () -> Unit,
     onPlay: (game: Game, bot: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var reverseSort by rememberSaveable { mutableStateOf(false) }
     Scaffold(
-        modifier = modifier,
+        modifier = Modifier
+            .statusBarsPadding()
+            .then(modifier),
         topBar = {
             TopAppBar(
                 title = {
                     Text(stringResource(R.string.display_title))
+                },
+                actions = {
+                    IconButton({ reverseSort = !reverseSort }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_swap_vert),
+                            contentDescription = stringResource(R.string.swap_sort_button_description)
+                        )
+                    }
+
+                    var showDeleteDialog by remember { mutableStateOf(false) }
+                    IconButton({ showDeleteDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = stringResource(R.string.delete_all_button_description)
+                        )
+                    }
+                    if (showDeleteDialog)
+                        DeleteAllDialog(
+                            onDismissRequest = { showDeleteDialog = false },
+                            onDeleteAll = onDeleteAll
+                        )
                 }
             )
         },
         floatingActionButton = {
             var showPlayDialog by rememberSaveable { mutableStateOf(false) }
             ExtendedFloatingActionButton(
-                onClick = { showPlayDialog = true }
+                onClick = { showPlayDialog = true },
+                modifier = Modifier.navigationBarsPadding()
             ) {
                 Text(stringResource(R.string.play_button_text))
             }
@@ -107,17 +144,36 @@ fun PastGames(
                     onDismissRequest = { showPlayDialog = false },
                     onPlay = onPlay
                 )
-        }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
         val gameSize = games.size
+        val navBarHeight = with(LocalDensity.current) {
+            WindowInsets.navigationBars.getBottom(this).toDp()
+        }
+        val listState = rememberLazyGridState()
+        LaunchedEffect(reverseSort) {
+            listState.scrollToItem(0)
+        }
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 400.dp),
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize(),
-            contentPadding = PaddingValues(bottom = (FAB_HEIGHT_DP + FAB_PADDING_DP).dp)
+            state = listState,
+            contentPadding = PaddingValues(
+                bottom = navBarHeight + (FAB_HEIGHT_DP + FAB_PADDING_DP).dp
+            )
         ) {
-            itemsIndexed(items = games, key = { _, it -> it.id }) { idx, game ->
+            itemsIndexed(
+                items = games
+                    .sortedByDescending { it.timestamp }
+                    .let {
+                        if (reverseSort) it.asReversed()
+                        else it
+                    },
+                key = { _, it -> it.id }
+            ) { idx, game ->
                 Column {
                     GameItem(
                         game = game,
@@ -126,6 +182,45 @@ fun PastGames(
                     )
                     if (idx < gameSize - 1)
                         HorizontalDivider(Modifier.padding(horizontal = 24.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DeleteAllDialog(
+    onDismissRequest: () -> Unit,
+    onDeleteAll: () -> Unit
+) {
+    Dialog(onDismissRequest) {
+        Card {
+            Column(
+                modifier = Modifier
+                    .padding(start = 16.dp, top = 32.dp, end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = stringResource(R.string.delete_all_game_confirm_text),
+                    style = MaterialTheme.typography.headlineMedium
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    IconButton(onDismissRequest) {
+                        Icon(
+                            imageVector = Icons.Outlined.Close,
+                            contentDescription = stringResource(R.string.close_dialog_button_description)
+                        )
+                    }
+                    IconButton({ onDeleteAll(); onDismissRequest() }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Done,
+                            contentDescription = stringResource(R.string.confirm_dialog_button_description)
+                        )
+                    }
                 }
             }
         }
@@ -354,7 +449,18 @@ private fun GameItem(
                 text = result,
                 fontWeight = FontWeight.Bold
             )
-            Text("${game.boardSize} x ${game.boardSize} win at ${game.winCondition}")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("${game.boardSize} x ${game.boardSize} win at ${game.winCondition}")
+                val dateTime = with(SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault(Locale.Category.FORMAT))) {
+                    format(game.timestamp)
+                }
+                Text(
+                    text = " - $dateTime",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontStyle = FontStyle.Italic,
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
         }
         Spacer(Modifier.weight(1f))
         IconButton(onClick = onInspect) {
@@ -409,8 +515,15 @@ private fun PastGamesPreview() {
         ),
         onInspect = {},
         onDelete = {},
+        onDeleteAll = {},
         onPlay = { _, _ -> }
     )
+}
+
+@Preview
+@Composable
+private fun DeleteAllDialogPreview() {
+    DeleteAllDialog({}, {})
 }
 
 @Preview

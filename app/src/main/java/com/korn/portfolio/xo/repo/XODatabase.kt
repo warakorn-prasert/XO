@@ -16,6 +16,8 @@ import androidx.room.TypeConverters
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.util.Calendar
+import java.util.Date
 import java.util.UUID
 
 @Entity
@@ -27,6 +29,7 @@ data class Game(
     val playerX: String,  // move value = true
     val playerO: String,  // move value = false
     val moves: List<List<List<Boolean?>>> = listOf(List(boardSize) { List(boardSize) { null } }),
+    val timestamp: Date = Calendar.getInstance().time
 ) {
     init {
         require(boardSize > 0) {
@@ -117,6 +120,9 @@ interface GameDao {
 
     @Query("SELECT * FROM Game")
     fun getAll(): Flow<List<Game>>
+
+    @Query("DELETE FROM Game")
+    suspend fun deleteAll()
 }
 
 class MovesConverter {
@@ -131,12 +137,20 @@ class MovesConverter {
     }
 }
 
+class DateConverters {
+    @TypeConverter
+    fun toDate(value: Long): Date = Date(value)
+
+    @TypeConverter
+    fun fromDate(value: Date): Long = value.time
+}
+
 @Database(
     entities = [Game::class],
     version = 1,
     exportSchema = false
 )
-@TypeConverters(MovesConverter::class)
+@TypeConverters(MovesConverter::class, DateConverters::class)
 abstract class XODatabase : RoomDatabase() {
     abstract fun gameDao() : GameDao
 
