@@ -68,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.korn.portfolio.xo.R
 import com.korn.portfolio.xo.repo.Game
+import com.korn.portfolio.xo.ui.common.appWaterMark
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -158,6 +159,7 @@ fun PastGames(
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 400.dp),
             modifier = Modifier
+                .appWaterMark()
                 .padding(paddingValues)
                 .fillMaxSize(),
             state = listState,
