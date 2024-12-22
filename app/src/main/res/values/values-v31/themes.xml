@@ -8,5 +8,8 @@
         <!--    If icon does not appear, run the app from emulator/device, not Android Studio. See: https://stackoverflow.com/a/69831106    -->
         <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
         <item name="android:windowSplashScreenIconBackgroundColor">#3DDC84</item>
+
+        <!--    API >= 31 will automatically use action bar theme which appears in compose layout somehow.     -->
+        <item name="postSplashScreenTheme">@style/Theme.Material3.Light.NoActionBar</item>
     </style>
 </resources>
