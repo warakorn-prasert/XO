@@ -72,4 +72,18 @@ class XOBotTest {
             )
         }
     }
+
+    private val losable = game.copy(moves = listOf(listOf(
+        listOf(true, false, true),
+        listOf(null, false, null),
+        listOf(false, true, true)
+    )))
+
+    @Test
+    fun `prevent player winning when 2 choices left`() {
+        assertEquals(
+            false,
+            losable.botMove(losable.playerO).moves.last()[1][2]
+        )
+    }
 }

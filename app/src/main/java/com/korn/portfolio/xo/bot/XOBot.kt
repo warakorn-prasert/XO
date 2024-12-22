@@ -50,11 +50,6 @@ private fun Game.minimax(
     isMax: Boolean,
     player: String
 ): Pair<Int, Int> {
-    // No empty space
-    // (also have to check before calling getMoves())
-    if (board.all { y -> y.none { xy -> xy == null } })
-        return 0 to depth
-
     val score = when (winner(board, winCondition)) {
         true -> if (player == playerX) 10 else -10
         false -> if (player == playerO) 10 else -10
@@ -63,6 +58,11 @@ private fun Game.minimax(
 
     if (score != 0 || depth == 4 /* speed is limit at winCondition=4 */)
         return score to depth
+
+    // No empty space
+    // (Have to check before calling getMoves() but after checking score in case of full board and score is not checked.)
+    if (board.all { y -> y.none { xy -> xy == null } })
+        return 0 to depth
 
     val moves = getMoves(board)
     var bestAlpha = alpha
