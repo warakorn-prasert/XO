@@ -34,6 +34,24 @@ class XOBotTest {
         unplayed2.botMove(unplayed2.playerO)
     }
 
+    private val playedOnce = game.copy(boardSize = 10, winCondition = 10, moves = listOf(listOf(
+        listOf(null, null, null, null, null, null, null, null, null, null),
+        listOf(null, true, null, null, null, null, null, null, null, null),
+        listOf(null, null, null, null, null, null, null, null, null, null),
+        listOf(null, null, null, null, null, null, null, null, null, null),
+        listOf(null, null, null, null, null, true, null, null, null, null),
+        listOf(null, null, null, null, null, null, null, null, null, null),
+        listOf(null, null, null, null, null, null, null, null, null, null),
+        listOf(null, null, null, null, null, null, null, null, null, null),
+        listOf(null, null, null, null, null, null, null, null, null, null),
+        listOf(null, null, null, null, null, null, null, null, null, null),
+    )))
+
+    @Test
+    fun `Worst case to play after first move`() {
+        playedOnce.botMove(playedOnce.playerO)
+    }
+
     private val winnable = listOf(
         game.copy(moves = listOf(listOf(
             listOf(false, false, null),
@@ -60,7 +78,7 @@ class XOBotTest {
     )
 
     @Test
-    fun `win in move`() {
+    fun `win in one move`() {
         winnable.forEach {
             assertEquals(
                 it.playerX,
@@ -73,17 +91,28 @@ class XOBotTest {
         }
     }
 
-    private val losable = game.copy(moves = listOf(listOf(
-        listOf(true, false, true),
-        listOf(null, false, null),
-        listOf(false, true, true)
-    )))
+    private val losables = listOf(
+        game.copy(moves = listOf(listOf(
+            listOf(true, false, true),
+            listOf(null, false, null),
+            listOf(false, true, true)
+        ))),
+        game.copy(moves = listOf(listOf(
+            listOf(false, null, true),
+            listOf(null, null, true),
+            listOf(null, null, null)
+        )))
+    )
 
     @Test
-    fun `prevent player winning when 2 choices left`() {
+    fun `prevent player from winning`() {
         assertEquals(
             false,
-            losable.botMove(losable.playerO).moves.last()[1][2]
+            losables[0].botMove(losables[0].playerO).moves.last()[1][2]
+        )
+        assertEquals(
+            false,
+            losables[1].botMove(losables[1].playerO).moves.last()[2][2]
         )
     }
 }
