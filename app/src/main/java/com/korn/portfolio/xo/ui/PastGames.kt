@@ -66,6 +66,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.korn.portfolio.xo.R
 import com.korn.portfolio.xo.repo.Game
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 private const val FAB_HEIGHT_DP = 56
 private const val FAB_PADDING_DP = 16
@@ -424,7 +426,18 @@ private fun GameItem(
                 text = result,
                 fontWeight = FontWeight.Bold
             )
-            Text("${game.boardSize} x ${game.boardSize} win at ${game.winCondition}")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("${game.boardSize} x ${game.boardSize} win at ${game.winCondition}")
+                val dateTime = with(SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault(Locale.Category.FORMAT))) {
+                    format(game.timestamp)
+                }
+                Text(
+                    text = " - $dateTime",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontStyle = FontStyle.Italic,
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
         }
         Spacer(Modifier.weight(1f))
         IconButton(onClick = onInspect) {
