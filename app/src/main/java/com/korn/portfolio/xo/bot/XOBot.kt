@@ -12,36 +12,25 @@ fun Game.botMove(botName: String): Game {
     moves.last().forEach {
         board.add(it.toMutableList())
     }
-    var bestVal = Int.MIN_VALUE
-    var bestY = -1
-    var bestX = -1
-    var bestDepth = Int.MAX_VALUE
-    repeat(boardSize) { y ->
-        repeat(boardSize) { x ->
-            if (board[y][x] == null) {
-                board[y][x] = botName == playerX
-                val (moveVal, depth) = minimax(
-                    board = board,
-                    depth = 0,
-                    alpha = Int.MIN_VALUE,
-                    beta = Int.MAX_VALUE,
-                    isMax = false,
-                    player = botName
-                )
-                board[y][x] = null
-                if (moveVal > bestVal || (moveVal == bestVal && depth < bestDepth)) {
-                    bestY = y
-                    bestX = x
-                    bestVal = moveVal
-                    bestDepth = depth
-                }
-            }
-        }
-    }
+
+    val (bestX, bestY, _) = minimax(
+        board = board,
+        depth = 0,
+        alpha = Int.MIN_VALUE,
+        beta = Int.MAX_VALUE,
+        isMax = true,
+        player = botName
+    )
 
     return addMove(botName, bestX, bestY)
 }
 
+/**
+ * Techniques
+ * - Minimax with alpha-beta pruning
+ * - Reduce search tree breadth (only choose moves around played moves)
+ * - Reduce search tree depth (max depth depends on board size and unplayed moves)
+ */
 private fun Game.minimax(
     board: MutableList<MutableList<Boolean?>>,
     depth: Int,
@@ -49,62 +38,60 @@ private fun Game.minimax(
     beta: Int,
     isMax: Boolean,
     player: String
-): Pair<Int, Int> {
+): Triple<Int, Int, Int> {  // x, y, score
+    val unusedMoves = getMoves(board)
+
+    // game over
+    val scoreUnit = boardSize * boardSize + 1
     val score = when (winner(board, winCondition)) {
-        true -> if (player == playerX) 10 else -10
-        false -> if (player == playerO) 10 else -10
+        true -> if (player == playerX) scoreUnit - depth else depth - scoreUnit
+        false -> if (player == playerO) scoreUnit - depth else depth - scoreUnit
         null -> 0
     }
+    val allUnusedMoves = board.flatten().filter { it == null }
+    val maxDepth =
+        if (boardSize == 3) 9
+        // Tested on emulators and Samsung Galaxy Note 10
+        // (Might need to test on weaker physical devices.)
+        else (boardSize * boardSize / allUnusedMoves.size.coerceAtLeast(1) + 2)
+            .coerceAtMost(unusedMoves.size * 2)
+    if (score != 0 || allUnusedMoves.isEmpty() || depth == maxDepth)
+        return Triple(-1, -1, score)
 
-    if (score != 0 || depth == 4 /* speed is limit at winCondition=4 */)
-        return score to depth
-
-    // No empty space
-    // (Have to check before calling getMoves() but after checking score in case of full board and score is not checked.)
-    if (board.all { y -> y.none { xy -> xy == null } })
-        return 0 to depth
-
-    val moves = getMoves(board)
+    // playable
+    var bestX = -1
+    var bestY = -1
+    var bestScore = if (isMax) Int.MIN_VALUE else Int.MAX_VALUE
     var bestAlpha = alpha
     var bestBeta = beta
 
-    return if (isMax) {
-        var best = Int.MIN_VALUE
-        var bestDepth = Int.MAX_VALUE
-        for ((x, y) in moves) {
-            if (board[y][x] == null) {
-                board[y][x] = player == playerX
-                minimax(board, depth + 1, bestAlpha, bestBeta, false, player).let {
-                    best = best.coerceAtLeast(it.first)
-                    bestDepth = it.second
-                }
-                board[y][x] = null
-
-                bestAlpha = alpha.coerceAtLeast(best)
-                if (best >= beta)
-                    break
+    for ((x, y) in unusedMoves) {
+        if (isMax) {
+            board[y][x] = player == playerX
+            val (_, _, newScore) = minimax(board, depth + 1, bestAlpha, bestBeta, false, player)
+            board[y][x] = null
+            if (newScore > bestScore) {
+                bestScore = newScore
+                bestX = x
+                bestY = y
             }
-        }
-        best to bestDepth
-    } else {
-        var best = Int.MAX_VALUE
-        var bestDepth = Int.MAX_VALUE
-        for ((x, y) in moves) {
-            if (board[y][x] == null) {
-                board[y][x] = player != playerX
-                minimax(board, depth + 1, bestAlpha, bestBeta, true, player).let {
-                    best = best.coerceAtMost(it.first)
-                    bestDepth = it.second
-                }
-                board[y][x] = null
-
-                bestBeta = beta.coerceAtMost(best)
-                if (best <= alpha)
-                    break
+            if (bestAlpha < bestScore) bestAlpha = bestScore
+            if (bestScore >= bestBeta) break
+        } else {
+            board[y][x] = player != playerX
+            val (_, _, newScore) = minimax(board, depth + 1, bestAlpha, bestBeta, true, player)
+            board[y][x] = null
+            if (newScore < bestScore) {
+                bestScore = newScore
+                bestX = x
+                bestY = y
             }
+            if (bestBeta > bestScore) bestBeta = bestScore
+            if (bestScore <= bestAlpha) break
         }
-        best to bestDepth
     }
+
+    return Triple(bestX, bestY, bestScore)
 }
 
 // Limit breadth of search tree
@@ -136,7 +123,10 @@ private fun getMoves(board: List<List<Boolean?>>): Set<Pair<Int, Int>> {
 
         if (willUse) moves.add(x to y)
     }
-    if (moves.isEmpty()) moves.add(unusedMoves.random())
+    if (moves.isEmpty() && unusedMoves.isNotEmpty())
+        // Might have to add more, by based on some values.
+        moves.add(unusedMoves.random())
 
-    return moves
+    // without shuffle, bot will prefer min x and y because of alpha-beta pruning
+    return moves.shuffled().toSet()
 }
