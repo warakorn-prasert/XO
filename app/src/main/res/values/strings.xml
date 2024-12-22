@@ -2,6 +2,7 @@
     <string name="app_name">XO</string>
     <string name="display_title">XO - Tic Tac Toe</string>
     <string name="play_button_text">Let\'s Play!</string>
+    <string name="swap_sort_button_description">Swap sort button</string>
     <string name="delete_button_description">Delete game button</string>
     <string name="delete_all_button_description">Delete all games button</string>
     <string name="inspect_button_description">Inspect game button</string>

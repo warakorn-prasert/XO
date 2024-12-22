@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -42,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -96,6 +98,7 @@ fun PastGames(
     onPlay: (game: Game, bot: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var reverseSort by rememberSaveable { mutableStateOf(false) }
     Scaffold(
         modifier = Modifier
             .statusBarsPadding()
@@ -106,6 +109,13 @@ fun PastGames(
                     Text(stringResource(R.string.display_title))
                 },
                 actions = {
+                    IconButton({ reverseSort = !reverseSort }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_swap_vert),
+                            contentDescription = stringResource(R.string.swap_sort_button_description)
+                        )
+                    }
+
                     var showDeleteDialog by remember { mutableStateOf(false) }
                     IconButton({ showDeleteDialog = true }) {
                         Icon(
@@ -141,16 +151,29 @@ fun PastGames(
         val navBarHeight = with(LocalDensity.current) {
             WindowInsets.navigationBars.getBottom(this).toDp()
         }
+        val listState = rememberLazyGridState()
+        LaunchedEffect(reverseSort) {
+            listState.scrollToItem(0)
+        }
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 400.dp),
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize(),
+            state = listState,
             contentPadding = PaddingValues(
                 bottom = navBarHeight + (FAB_HEIGHT_DP + FAB_PADDING_DP).dp
             )
         ) {
-            itemsIndexed(items = games, key = { _, it -> it.id }) { idx, game ->
+            itemsIndexed(
+                items = games
+                    .sortedByDescending { it.timestamp }
+                    .let {
+                        if (reverseSort) it.asReversed()
+                        else it
+                    },
+                key = { _, it -> it.id }
+            ) { idx, game ->
                 Column {
                     GameItem(
                         game = game,
