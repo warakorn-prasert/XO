@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -36,6 +37,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -98,89 +100,150 @@ fun Playing(
             )
         },
     ) { paddingValues ->
-        Column(
+        val isBotThinking = game.currentPlayer == bot
+        val scope = rememberCoroutineScope()
+        LaunchedEffect(isBotThinking) {
+            scope.launch(Dispatchers.Default) {
+                if (game.currentPlayer == bot && isPlaying) {
+                    val oldBoard = game.moves.last()
+                    val newBoard = game.botMove(bot).moves.last()
+                    var botX = -1
+                    var botY = -1
+                    for (yy in 0..<game.boardSize) {
+                        for (xx in 0..<game.boardSize) {
+                            if (newBoard[yy][xx] != oldBoard[yy][xx]) {
+                                botX = xx
+                                botY = yy
+                            }
+                        }
+                    }
+                    delay(BOT_DELAY_MILLIS)
+                    onCellClick(bot, botX, botY)
+                }
+            }
+        }
+
+        RowOrColumnBasedOnBiggerSpace(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceEvenly,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            val isBotThinking = game.currentPlayer == bot
-            FlowRow(
-                modifier = Modifier
-                    .padding(start = 16.dp, top = 8.dp, end = 16.dp)
-                    .width(IntrinsicSize.Max),
-                horizontalArrangement = Arrangement.spacedBy(48.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
-            ) {
-                Text(
-                    text = "${game.currentPlayer}'s turn",
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.displaySmall
-                )
-                val textSize = with(LocalDensity.current) {
-                    MaterialTheme.typography.displaySmall.fontSize.toDp()
-                }
-                Box(
-                    modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.Center
+            playersTurn = {
+                FlowRow(
+                    modifier = Modifier.width(IntrinsicSize.Max),
+                    horizontalArrangement = Arrangement.spacedBy(48.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp)
                 ) {
-                    val degree by animateFloatAsState(
-                        targetValue = if (isBotThinking) 360f else 0f,
-                        animationSpec = InfiniteRepeatableSpec(tween(BOT_BOX_ROTATE_MILLS)),
-                        label = stringResource(R.string.bot_box_degree_anim_label)
+                    Text(
+                        text = "${game.currentPlayer}'s turn",
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.displaySmall
                     )
-                    Box(Modifier
-                        .let {
-                            if (isBotThinking) it.rotate(degree)
-                            else it
-                        }
-                        .size(textSize * 1.5f)
-                        .leftBorder()
-                        .topBorder()
-                        .rightBorder()
-                        .bottomBorder()
-                        .let {
-                            if (game.currentPlayer == game.playerX) it.drawX()
-                            else it.drawO()
-                        }
-                        .aspectRatio(1f)
-                    )
-                }
-            }
-
-            val scope = rememberCoroutineScope()
-            LaunchedEffect(isBotThinking) {
-                scope.launch(Dispatchers.Default) {
-                    if (game.currentPlayer == bot && isPlaying) {
-                        val oldBoard = game.moves.last()
-                        val newBoard = game.botMove(bot).moves.last()
-                        var botX = -1
-                        var botY = -1
-                        for (yy in 0..<game.boardSize) {
-                            for (xx in 0..<game.boardSize) {
-                                if (newBoard[yy][xx] != oldBoard[yy][xx]) {
-                                    botX = xx
-                                    botY = yy
-                                }
+                    val textSize = with(LocalDensity.current) {
+                        MaterialTheme.typography.displaySmall.fontSize.toDp()
+                    }
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val degree by animateFloatAsState(
+                            targetValue = if (isBotThinking) 360f else 0f,
+                            animationSpec = InfiniteRepeatableSpec(tween(BOT_BOX_ROTATE_MILLS)),
+                            label = stringResource(R.string.bot_box_degree_anim_label)
+                        )
+                        Box(Modifier
+                            .let {
+                                if (isBotThinking) it.rotate(degree)
+                                else it
                             }
-                        }
-                        delay(BOT_DELAY_MILLIS)
-                        onCellClick(bot, botX, botY)
+                            .size(textSize * 1.5f)
+                            .leftBorder()
+                            .topBorder()
+                            .rightBorder()
+                            .bottomBorder()
+                            .let {
+                                if (game.currentPlayer == game.playerX) it.drawX()
+                                else it.drawO()
+                            }
+                            .aspectRatio(1f)
+                        )
                     }
                 }
+            },
+            board = {
+                GameBoard(
+                    board = game.moves.last(),
+                    enabled = isPlaying && !isBotThinking,
+                    onCellClick = { x, y -> onCellClick(game.currentPlayer, x, y) }
+                )
             }
+        )
 
-            GameBoard(
-                board = game.moves.last(),
-                enabled = isPlaying && !isBotThinking,
-                onCellClick = { x, y -> onCellClick(game.currentPlayer, x, y) },
-                modifier = Modifier.padding(40.dp)
-            )
-        }
         if (!isPlaying)
             ResultDialog(game, onExit)
     }
+}
+
+@Composable
+fun RowOrColumnBasedOnBiggerSpace(
+    modifier: Modifier = Modifier,
+    playersTurn: @Composable () -> Unit,
+    board: @Composable () -> Unit
+) {
+    val config = LocalConfiguration.current
+    val width = config.screenWidthDp
+    val height = config.screenHeightDp - 64  // Material Design 3's top app bar
+    if (width <= height + 100)  // prefer Column when screen looks nearly square
+        Column(
+            modifier = Modifier
+                .padding(top = 32.dp, bottom = 32.dp)
+                .fillMaxSize()
+                .then(modifier),
+            verticalArrangement = Arrangement.SpaceEvenly,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                playersTurn()
+            }
+            Box(
+                modifier = Modifier
+                    .weight(3f)
+                    .padding(horizontal = 48.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                board()
+            }
+        }
+    else
+        Row(
+            modifier = Modifier
+                .padding(start = 32.dp, end = 32.dp)
+                .fillMaxSize()
+                .then(modifier),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(2f)
+                    .padding(vertical = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                playersTurn()
+            }
+            Box(
+                modifier = Modifier
+                    .weight(3f)
+                    .padding(top = 16.dp, bottom = 32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                board()
+            }
+        }
 }
 
 @Composable

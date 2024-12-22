@@ -7,7 +7,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -83,96 +82,95 @@ fun Inspect(
             )
         },
     ) { paddingValues ->
-        Column(
+        var currentIdx by rememberSaveable { mutableIntStateOf(0) }
+        val currentPlayer = game.currentPlayer(currentIdx)
+        RowOrColumnBasedOnBiggerSpace(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceEvenly,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            var currentIdx by rememberSaveable { mutableIntStateOf(0) }
-            val currentPlayer = game.currentPlayer(currentIdx)
-            FlowRow(
-                modifier = Modifier
-                    .padding(start = 16.dp, top = 8.dp, end = 16.dp)
-                    .width(IntrinsicSize.Max),
-                horizontalArrangement = Arrangement.spacedBy(48.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
-            ) {
-                Text(
-                    text = when {
-                        currentIdx < game.moves.size - 1 -> "$currentPlayer's turn"
-                        game.winner != null -> "${game.winner} won!"
-                        else -> stringResource(R.string.draw_message)
-                    },
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.displaySmall
-                )
-                val textSize = with(LocalDensity.current) {
-                    MaterialTheme.typography.displaySmall.fontSize.toDp()
-                }
-                if (currentIdx < game.moves.size - 1)
-                    Box(
-                        modifier = Modifier.weight(1f),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Box(Modifier
-                            .size(textSize * 1.5f)
-                            .leftBorder()
-                            .topBorder()
-                            .rightBorder()
-                            .bottomBorder()
-                            .let { it2 ->
-                                when (currentPlayer) {
-                                    game.playerX -> it2.drawX()
-                                    game.playerO -> it2.drawO()
-                                    else -> it2
+            playersTurn = {
+                FlowRow(
+                    modifier = Modifier.width(IntrinsicSize.Max),
+                    horizontalArrangement = Arrangement.spacedBy(48.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp)
+                ) {
+                    Text(
+                        text = when {
+                            currentIdx < game.moves.size - 1 -> "$currentPlayer's turn"
+                            game.winner != null -> "${game.winner} won!"
+                            else -> stringResource(R.string.draw_message)
+                        },
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.displaySmall
+                    )
+                    val textSize = with(LocalDensity.current) {
+                        MaterialTheme.typography.displaySmall.fontSize.toDp()
+                    }
+                    if (currentIdx < game.moves.size - 1)
+                        Box(
+                            modifier = Modifier.weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Box(Modifier
+                                .size(textSize * 1.5f)
+                                .leftBorder()
+                                .topBorder()
+                                .rightBorder()
+                                .bottomBorder()
+                                .let { it2 ->
+                                    when (currentPlayer) {
+                                        game.playerX -> it2.drawX()
+                                        game.playerO -> it2.drawO()
+                                        else -> it2
+                                    }
                                 }
+                                .aspectRatio(1f)
+                            )
+                        }
+                }
+            },
+            board = {
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 40.dp)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(32.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowLeft,
+                        contentDescription = stringResource(R.string.inspect_previous_move_button_description),
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .let {
+                                if (currentIdx > 0) it.clickable { currentIdx-- }
+                                else it
                             }
                             .aspectRatio(1f)
-                        )
-                    }
+                            .weight(1f)
+                    )
+                    GameBoard(
+                        board = game.moves[currentIdx],
+                        enabled = false,
+                        onCellClick = { _, _ -> },
+                        modifier = Modifier.weight(5f),
+                        matchHeightConstraintsFirst = true
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+                        contentDescription = stringResource(R.string.inspect_next_move_button_description),
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .let {
+                                if (currentIdx < game.moves.size - 1) it.clickable { currentIdx++ }
+                                else it
+                            }
+                            .aspectRatio(1f)
+                            .weight(1f)
+                    )
+                }
             }
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 40.dp)
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowLeft,
-                    contentDescription = stringResource(R.string.inspect_previous_move_button_description),
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .let {
-                            if (currentIdx > 0) it.clickable { currentIdx-- }
-                            else it
-                        }
-                        .aspectRatio(1f)
-                        .weight(1f)
-                )
-                GameBoard(
-                    board = game.moves[currentIdx],
-                    enabled = false,
-                    onCellClick = { _, _ -> },
-                    modifier = Modifier.weight(5f),
-                    matchHeightConstraintsFirst = true
-                )
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-                    contentDescription = stringResource(R.string.inspect_next_move_button_description),
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .let {
-                            if (currentIdx < game.moves.size - 1) it.clickable { currentIdx++ }
-                            else it
-                        }
-                        .aspectRatio(1f)
-                        .weight(1f)
-                )
-            }
-        }
+        )
     }
 }
 
